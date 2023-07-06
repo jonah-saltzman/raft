@@ -1,4 +1,4 @@
-import { Echo, EchoOk, GenerateOk, InitOk, isEcho, isGenerate, isInit, Msg } from "./types";
+import { Echo, EchoOk, GenerateOk, InitOk, isEcho, isGenerate, isInit, Routing } from "./types";
 import { Interface } from "readline";
 import * as fs from 'fs'
 import { format } from 'util'
@@ -14,17 +14,19 @@ export const log = (...args: any[]) => {
 
 export class StateMachine {
 
-    out: Interface
+    send: (reply: string) => void
     curr_id = 0
     node_id = `${hostname()}-${process.pid}`
+    nodes: string[] = []
 
-    constructor(io: Interface) {
-        this.out = io
+    constructor(out: (reply: string) => void) {
+        this.send = out
     }
 
     receiveMsg(msg: unknown) {
         log('processing msg: ', msg)
         if (isInit(msg)) {
+            this.nodes = msg.body.node_ids
             const reply: InitOk = {
                 ...this.swap(msg),
                 body: {
@@ -63,13 +65,13 @@ export class StateMachine {
         throw new Error('unknown message')
     }
 
-    swap(msg: Msg) {
+    swap(msg: Routing) {
         return { src: msg.dest, dest: msg.src }
     }
 
     sendReply(msg: unknown) {
         this.curr_id += 1
         const reply = JSON.stringify(msg)
-        console.log(reply)
+        this.send(reply)
     }
 }

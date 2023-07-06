@@ -5,7 +5,7 @@ import * as fs from 'fs'
 export class Listener {
 
     io = readline.createInterface({input: process.stdin})
-    fsm = new StateMachine(this.io)
+    fsm = new StateMachine(console.log)
 
     public async listen() {
         fs.writeFileSync(LOG, "")
