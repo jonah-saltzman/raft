@@ -2,5 +2,9 @@
 
 const {Listener} = require('./dist')
 
-const app = new Listener()
-app.listen()
+async function main() {
+    const app = new Listener()
+    await app.listen()
+}
+
+main().catch(console.log)
