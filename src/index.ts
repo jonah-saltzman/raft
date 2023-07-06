@@ -1,6 +1,7 @@
 import * as readline from 'readline'
 import { StateMachine, log, LOG } from './raft'
 import * as fs from 'fs'
+import { isMessage } from './types'
 
 export class Listener {
 
@@ -12,6 +13,9 @@ export class Listener {
         const listener = this.getListener(this.io)
         for await (const line of listener) {
             const msg = JSON.parse(line)
+            if (!isMessage(msg)) {
+                throw new Error('invalid message')
+            }
             this.fsm.receiveMsg(msg)
         }
     }

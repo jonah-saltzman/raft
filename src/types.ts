@@ -5,13 +5,13 @@ export type Routing = {
 
 type Body<T, U> = {
     body: {
-        type: string
         msg_id: number
         in_reply_to?: number
     } & T & { type: U }
 }
 
 export type Message<T, U> = Routing & Body<T, U>
+export type GenericMessage = Message<unknown, string>
 
 export type Echo = Message<{echo: string}, 'echo'>
 export type EchoOk = Message<{echo: string}, 'echo_ok'>
@@ -31,14 +31,15 @@ export type ReadOk = Message<{messages: number[]}, 'read_ok'>
 export type Topology = Message<{topology: {[key: string]: string[]}}, 'topology'>
 export type TopologyOk = Message<{}, 'topology_ok'>
 
-export const isEcho = (msg: any): msg is Echo => {
-    return msg?.body?.type === 'echo'
+export function isMessage(msg: unknown): msg is GenericMessage {
+    if (typeof msg['src'] !== 'string') return false
+    if (typeof msg['dest'] !== 'string') return false
+    if (typeof msg['body'] !== 'object') return false
+    if (typeof msg['body']['type'] !== 'string') return false
+    if (typeof msg['body']['msg_id'] !== 'number') return false
+    return true
 }
 
-export const isInit = (msg: any): msg is Init => {
-    return msg?.body?.type === 'init'
-}
-
-export const isGenerate = (msg: any): msg is Generate => {
-    return msg?.body?.type === 'generate'
+export function isType<T extends GenericMessage>(msg: GenericMessage, type: string): msg is T {
+    return msg.body.type === type
 }
