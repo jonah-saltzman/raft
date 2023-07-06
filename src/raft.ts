@@ -13,21 +13,19 @@ export const log = (...args: any[]) => {
 
 export class StateMachine {
 
-    send: (reply: string) => void
     curr_id = 0
     node_id = `${hostname()}-${process.pid}`
     nodes: string[] = []
     messages: number[] = []
     topology: {[key: string]: string[]}
 
-    constructor(out: (reply: string) => void) {
-        this.send = out
-    }
+    constructor(private send: (reply: string) => void) {}
 
     receiveMsg(msg: GenericMessage) {
         log('processing msg: ', msg)
         if (isType<Read>(msg, 'read')) {
-            const reply: ReadOk = this.getReply(msg, {messages: this.messages}, 'read_ok')
+            const body = { messages: this.messages }
+            const reply: ReadOk = this.getReply(msg, body, 'read_ok')
             return this.sendReply(reply)
         }
         if (isType<Broadcast>(msg, 'broadcast')) {
@@ -46,27 +44,21 @@ export class StateMachine {
             return this.sendReply(reply)
         }
         if (isType<Echo>(msg, 'echo')) {
-            const reply: EchoOk = this.getReply(msg, {echo: msg.body.echo}, 'echo_ok')
+            const body = { echo: msg.body.echo }
+            const reply: EchoOk = this.getReply(msg, body, 'echo_ok')
             return this.sendReply(reply)
         }
         if (isType<Generate>(msg, 'generate')) {
-            const reply: GenerateOk = this.getReply(
-                msg,
-                {id: `${this.node_id}-${this.curr_id}`},
-                'generate_ok'
-            )
+            const body = { id: `${this.node_id}-${this.curr_id}` }
+            const reply: GenerateOk = this.getReply(msg, body, 'generate_ok')
             return this.sendReply(reply)
         }
         log('unknown msg: ', msg)
         throw new Error('unknown message')
     }
 
-    swap(msg: Routing) {
-        return { src: msg.dest, dest: msg.src }
-    }
-
     getReply<
-        T extends Message<unknown, string>, 
+        T extends GenericMessage, 
         U extends {[k: string]: unknown}, 
         V extends string
     >(msg: T, body: U, desc: V): Message<U, V> {
