@@ -1,5 +1,5 @@
 import * as readline from 'readline'
-import { StateMachine, log, LOG } from './raft'
+import { StateMachine, LOG } from './raft'
 import * as fs from 'fs'
 import { isMessage } from './types'
 

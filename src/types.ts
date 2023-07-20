@@ -3,7 +3,7 @@ export type Routing = {
     dest: string
 }
 
-type Body<T, U> = {
+export type Body<T, U> = {
     body: {
         msg_id: number
         in_reply_to?: number
@@ -30,6 +30,13 @@ export type ReadOk = Message<{messages: number[]}, 'read_ok'>
 
 export type Topology = Message<{topology: {[key: string]: string[]}}, 'topology'>
 export type TopologyOk = Message<{}, 'topology_ok'>
+
+
+export type GossipBody = {value: number, completedNodes: string[], steps: number}
+export type GossipOkBody = {completedNodes: string[]}
+
+export type Gossip = Message<GossipBody, 'gossip'>
+export type GossipOk = Message<GossipOkBody, 'gossip_ok'>
 
 export function isMessage(msg: unknown): msg is GenericMessage {
     if (typeof msg['src'] !== 'string') return false
