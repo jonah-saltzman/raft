@@ -9,6 +9,7 @@ type SentMessage = {
     id: number
     msg: MSG.GenericMessage
     handler: ReplyHandler<unknown, unknown>
+    ts: number
 }
 
 type ReplyHandler<T, U> = (msg: MSG.Message<T, U>) => void
@@ -23,7 +24,9 @@ export class StateMachine {
     sent: Map<Number, SentMessage> = new Map()
     gossips: Map<number, {received: Set<string>, timer: NodeJS.Timeout}> = new Map()
 
-    constructor(private out: (reply: string) => void) {}
+    constructor(private out: (reply: string) => void, retryDelayMS: number, retryIntervalMS: number) {
+        setInterval(() => this.retryMessages(retryDelayMS), retryIntervalMS)
+    }
 
     receiveMsg(msg: MSG.GenericMessage) {
         this.log('processing msg: ', msg)
@@ -125,7 +128,8 @@ export class StateMachine {
         this.sent.set(this.currentMsgId, {
             id: this.currentMsgId,
             msg,
-            handler: replyHandler ? replyHandler.bind(this) : undefined
+            handler: replyHandler ? replyHandler.bind(this) : undefined,
+            ts: new Date().getTime()
         })
         this.send(msg)
     }
@@ -151,6 +155,16 @@ export class StateMachine {
         this.currentMsgId += 1
         const reply = JSON.stringify(msg)
         this.out(reply)
+    }
+
+    retryMessages(delayMS: number) {
+        const now = new Date().getTime()
+        for (const [val, msg] of this.sent.entries()) {
+            if (now - msg.ts > delayMS) {
+                this.send(msg.msg)
+                this.sent.set(val, {...msg, ts: now})
+            }
+        }
     }
 
     log(...args: any[]) {

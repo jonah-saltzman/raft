@@ -6,7 +6,7 @@ import { isMessage } from './types'
 export class Listener {
 
     io = readline.createInterface({input: process.stdin})
-    fsm = new StateMachine(console.log)
+    fsm = new StateMachine(console.log, 1000, 500)
 
     public async listen() {
         fs.writeFileSync(LOG, "")
